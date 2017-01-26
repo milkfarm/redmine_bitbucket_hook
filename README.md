@@ -15,7 +15,7 @@ That approach works perfectly fine, but is a bit heavy-handed and cumbersome. Th
 ### 1. Install the plugin
 
 1. Add the gem to your Gemfile.local:
-   `gem "redmine_bitbucket_hook"`
+   `gem 'redmine_bitbucket_hook', git: 'git://github.com/milkfarm/redmine_bitbucket_hook.git'`
 2. `bundle`
 3. Restart your Redmine
 
