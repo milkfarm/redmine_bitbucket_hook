@@ -14,37 +14,43 @@ That approach works fine, but is a bit heavy-handed and cumbersome. The Redmine 
 
 ### 1. Install the plugin
 
-1. Add the gem to the `Gemfile.local` file within your Redmine
-   installation (`[/PATH/TO/REDMINE]`):
+1. Add the gem to the `Gemfile.local` file within your Redmine installation (`[/PATH/TO/REDMINE]`):
    `gem 'redmine_bitbucket_hook', git: 'git://github.com/milkfarm/redmine_bitbucket_hook.git'`
-2. Install the gem using: `bundle`
-3. Restart your Redmine application (eg, `touch tmp/restart.txt`)
+2. Install the gem:
+   `bundle`
+3. Restart your Redmine application:
+   `touch tmp/restart.txt`
 
-### 2. Add the repository to Redmine
+### 2. Clone the repository on the Redmine server
 
-Adding a Git repository to a project should work whether you want to use Redmine BitBucket Hook or not. For full instructions, refer to the Redmine site for [keeping your git repository in sync](http://www.redmine.org/wiki/redmine/HowTo_keep_in_sync_your_git_repository_for_redmine). Note: Redmine BitBucket Hook obviates the need to setup a cron job.
+Before adding a repository to a project, you should `clone` the repository on the Redmine server.
 
 1. `cd [/PATH/TO/REDMINE]`
-2. `mkdir [REPOSITORY_DIR]`
-3. `cd [REPOSITORY_DIR]`
+2. `mkdir [REPOSITORIES_DIR]`
+3. `cd [REPOSITORIES_DIR]`
 4. `git clone --mirror git@bitbucket.org:[BITBUCKET_USER]/[REPOSITORY_IDENTIFIER].git`
-5. Click "New repository" in the Project Repositories interface of Redmine (Project > Settings > Repositories > New repository)
-6. Populate the form with the following information, then click "Create".
+
+### 3. Add the repository to a Redmine project
+
+Associating a Git repository to a project is explained in detail on the Redmine site under the heading: [Keeping Your Git Repository in Sync](http://www.redmine.org/wiki/redmine/HowTo_keep_in_sync_your_git_repository_for_redmine). Note: Redmine BitBucket Hook obviates the need to setup a cron job.
+
+1. Click "New repository" in the Project Repositories interface of Redmine (Project > Settings > Repositories > New repository)
+2. Populate the form with the following information, then click "Create".
   * SCM = `Git`
   * Identifier = `[REPOSITORY_IDENTIFIER]`
-  * Path to repository = `[/PATH/TO/REDMINE/REPOSITORY_DIR/REPOSITORY_IDENTIFIER.git]`
+  * Path to repository = `[/PATH/TO/REDMINE/REPOSITORIES_DIR/REPOSITORY_IDENTIFIER.git]`
 
-### 3. Connecting BitBucket to Redmine
+### 4. Create a webhook to connect BitBucket to Redmine
 
 1. Go to the Settings interface on BitBucket for the given repository.
 2. Click "Add webhook" in the "Webhooks" section of the Settings interface.
 3. Populate the form with the following information, then click "Save".
   * Title = `Redmine` (or as you wish)
-  * URL = `[REDMINE_URL]/bitbucket_hook?project_id=[PROJECT_IDENTIFIER]&repository_id=[REPOSITORY_IDENTIFIER]` (eg, `http://redmine.example.com/bitbucket_hook?project_id=foo&repository_id=bar`)
+  * URL = `[REDMINE_URL]/bitbucket_hook?project_id=[REDMINE_PROJECT_IDENTIFIER]&repository_id=[REDMINE_REPOSITORY_IDENTIFIER]` (eg, `http://redmine.example.com/bitbucket_hook?project_id=foo&repository_id=bar`)
   * Status = `Active`
   * Triggers = `Repository push`
 
-BitBucket will now send a HTTP POST to the Redmine BitBucket Hook plugin whenever changes are pushed to BitBucket. The plugin then takes care of pulling the changes to the local repository and updating the Redmine database with them.
+BitBucket will now send an HTTP POST to the Redmine BitBucket Hook plugin whenever changes are pushed to BitBucket. The plugin then pulls the changes to the local repository and updates the Redmine database.
 
 ## Assumptions
 
