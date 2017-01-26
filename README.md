@@ -1,58 +1,66 @@
 # Redmine BitBucket Hook
 
-This plugin allows you to update your local Git repositories in Redmine when changes have been pushed to BitBucket.
+This plugin allows you to update your local Git repository in Redmine when changes have been pushed to BitBucket.
 
 ## Description
 
-[Redmine](http://redmine.org) has supported Git repositories for a long time, allowing you to browse your code and view your changesets directly in Redmine. For this purpose, Redmine relies on local clones of the Git repositories.
+[Redmine](http://redmine.org) has supported Git repositories for a long time, allowing you to browse your code and view your changesets directly in Redmine. For this purpose, Redmine relies on a local clone of a given Git repository.
 
-If your shared repository is on a remote machine - for example on BitBucket - this unfortunately means a bit of legwork to keep the local, Redmine-accessible repository up-to-date. The common approach is to set up a cronjob that pulls in any changes with regular intervals and updates Redmine with them.
+If your shared repository is on a remote machine--for example on BitBucket--this unfortunately means a bit of legwork to keep the local, Redmine-accessible repository up-to-date. The common approach is to set up a cron job that pulls changes at regular intervals then similarly updates Redmine.
 
-That approach works perfectly fine, but is a bit heavy-handed and cumbersome. The Redmine BitBucket Hook plugin allows BitBucket to notify your Redmine installation when changes have been pushed to a repository, triggering an update of your local repository and Redmine data only when it is actually necessary.
+That approach works fine, but is a bit heavy-handed and cumbersome. The Redmine BitBucket Hook plugin allows BitBucket to notify your Redmine installation when changes have been pushed to a repository, triggering an update of your local repository and Redmine data only when necessary.
 
 ## Getting started
 
 ### 1. Install the plugin
 
-1. Add the gem to your Gemfile.local:
+1. Add the gem to the `Gemfile.local` file within your Redmine
+   installation (`[/PATH/TO/REDMINE]`):
    `gem 'redmine_bitbucket_hook', git: 'git://github.com/milkfarm/redmine_bitbucket_hook.git'`
-2. `bundle`
-3. Restart your Redmine
+2. Install the gem using: `bundle`
+3. Restart your Redmine application (eg, `touch tmp/restart.txt`)
 
 ### 2. Add the repository to Redmine
 
-Adding a Git repository to a project (note, this should work whether you want to use Redmine BitBucket Hook or not).
+Adding a Git repository to a project should work whether you want to use Redmine BitBucket Hook or not. For full instructions, refer to the Redmine site for [keeping your git repository in sync](http://www.redmine.org/wiki/redmine/HowTo_keep_in_sync_your_git_repository_for_redmine). Note: Redmine BitBucket Hook obviates the need to setup a cron job.
 
-1. Simply follow the instructions for [keeping your git repository in sync](http://www.redmine.org/wiki/redmine/HowTo_keep_in_sync_your_git_repository_for_redmine).
- * You don't need to set up a cron task as described in the Redmine instructions.
+1. `cd [/PATH/TO/REDMINE]`
+2. `mkdir [REPOSITORY_DIR]`
+3. `cd [REPOSITORY_DIR]`
+4. `git clone --mirror git@bitbucket.org:[BITBUCKET_USER]/[REPOSITORY_IDENTIFIER].git`
+5. Click "New repository" in the Project Repositories interface of Redmine (Project > Settings > Repositories > New repository)
+6. Populate the form with the following information, then click "Create".
+  * SCM = `Git`
+  * Identifier = `[REPOSITORY_IDENTIFIER]`
+  * Path to repository = `[/PATH/TO/REDMINE/REPOSITORY_DIR/REPOSITORY_IDENTIFIER.git]`
 
 ### 3. Connecting BitBucket to Redmine
 
-1. Go to the repository Settings interface on BitBucket.
-2. Under "Webhooks & Services" add a new "WebHook". The "Payload URL" needs to be of the format: `[redmine_url]/bitbucket_hook` (for example `http://redmine.example.com/bitbucket_hook`).
-   * By default, BitBucket Hook assumes your BitBucket repository name is the same as the *project identifier* in your Redmine installation.
-     * If this is not the case, you can specify the actual Redmine project identifier in the Post-Receive URL by using the format `[redmine_url]/bitbucket_hook?project_id=[identifier]` (for example `http://redmine.example.com/bitbucket_hook?project_id=my_project`).
-     * BitBucket Hook will then update **all repositories** in the specified project. *Be aware, that this process may take a while if you have many repositories in your project.*
-     * If you want BitBucket Hook to **only update the current repository** you can specify it with an additional parameter in the Post-Receive URL by using the format `[redmine_url]/bitbucket_hook?project_id=[identifier]&repository_id=[repository]` (for example `http://redmine.example.com/bitbucket_hook?project_id=my_project&repository_id=my_repo`).
-   * In most cases, just having the "push" event trigger the webhook should suffice, but you are free to customize the events as you desire.
+1. Go to the Settings interface on BitBucket for the given repository.
+2. Click "Add webhook" in the "Webhooks" section of the Settings interface.
+3. Populate the form with the following information, then click "Save".
+  * Title = `Redmine` (or as you wish)
+  * URL = `[REDMINE_URL]/bitbucket_hook?project_id=[PROJECT_IDENTIFIER]&repository_id=[REPOSITORY_IDENTIFIER]` (eg, `http://redmine.example.com/bitbucket_hook?project_id=foo&repository_id=bar`)
+  * Status = `Active`
+  * Triggers = `Repository push`
 
-That's it. BitBucket will now send a HTTP POST to the Redmine BitBucket Hook plugin whenever changes are pushed to BitBucket. The plugin then takes care of pulling the changes to the local repositories and updating the Redmine database with them.
+BitBucket will now send a HTTP POST to the Redmine BitBucket Hook plugin whenever changes are pushed to BitBucket. The plugin then takes care of pulling the changes to the local repository and updating the Redmine database with them.
 
 ## Assumptions
 
 * Redmine 3.3.x running on a *nix-like system.
-* Git 1.5 or higher available on the command line.
+* Git 1.8 or higher available on the command line.
 
 ## Troubleshooting
 
 ### Check your logfile
 
-If you run into issues, your Redmine logfile might have some valuable information. Two things to check for:
+If you run into issues, your Redmine logfile (eg, `log/production.log`) might have some valuable information. Two things to check for:
 
 1. Do POST requests to `/bitbucket_hook` show up in the logfile at all? If so, what's the resulting status code?
 2. If the git command used to pull in changes fails for whatever reason, there should also be some details about the failure in the logfile.
 
-The logfile is usually found in your Redmine directory in `log/production.log` although your webserver logs may contain some additional clues.
+Your webserver logs may contain some additional clues.
 
 ### Permissions problems
 
@@ -65,7 +73,7 @@ What user you are running Redmine as depends on your system and how you've setup
 
 #### BitBucket
 
-This means you need to add its SSH keys on BitBucket. If the user doesn't already have an SSH key, generate one and add the public SSH key as a Deploy Key for the repository on BitBucket (or as one of your own keys, if you prefer that).
+This means you need to add its SSH keys on BitBucket. If the user doesn't already have an SSH key, generate one and add the public SSH key as a Deployment Key for the repository on BitBucket (or as one of your own keys, if you prefer that).
 
 #### Local repository
 
